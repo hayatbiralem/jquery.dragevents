@@ -12,10 +12,12 @@
       // cache
       var $this = $(this);
       var draggable = $this.data('dragevents');
+      var $doc = $(document);
 
       // destroy?
       if (options === 'destroy') {
         $this.off('.dragevents');
+        $doc.off('.dragevents');
         $this.data('dragevents', null);
         return true;
       }
@@ -36,35 +38,47 @@
 
       // plugin actions
       $this
-        .on('mousedown.dragevents', function(e) {
-          switch (e.which) {
-            // prevent right or middle buttons
-            case 2:
-            case 3:
-              break;
-            // add ability to left button
-            default:
-              dragging.status = true;
-              dragging.startEvent = e;
-              $.isFunction(settings.onStart) && settings.onStart(dragging);
-              break;
-          }
-        })
-        .on('mouseup.dragevents', function(e) {
-          dragging.status = false;
-          dragging.endEvent = e;
-          $.isFunction(settings.onEnd) && settings.onEnd(dragging);
-        })
-        .on('mousemove.dragevents', function(e) {
-          if (dragging.status) {
-            dragging.dragEvent = e;
+        .on('mousedown.dragevents touchstart.dragevents touchmove.dragevents touchend.dragevents mousemove.dragevents click.dragevents', function (event) {
+
+          event.preventDefault();
+
+          if ((event.type === 'mousedown' && event.which === 1) || event.type === 'touchstart') {
+            dragging.status = true;
+            dragging.startEvent = event;
+            $.isFunction(settings.onStart) && settings.onStart(dragging);
+          } else if (event.type === 'touchmove') {
+            dragging.dragEvent = event;
             $.isFunction(settings.onDrag) && settings.onDrag(dragging);
+          } else if (event.type === 'touchend') {
+            if(dragging.status){
+              dragging.status = false;
+              dragging.endEvent = event;
+              $.isFunction(settings.onEnd) && settings.onEnd(dragging);
+            }
           }
-        })
+        });
+      
+      $doc.on('mouseup.dragevents', function (event) {
+        //event.preventDefault();
+        if(dragging.status){
+          dragging.status = false;
+          dragging.endEvent = event;
+          $.isFunction(settings.onEnd) && settings.onEnd(dragging);
+        }
+      });
+      
+      $doc.bind('mousemove.dragevents', function (event) {
+        if(dragging.status){
+          dragging.dragEvent = event;
+          $.isFunction(settings.onDrag) && settings.onDrag(dragging);
+        }
+      });
+      
+      $this
         .data('dragevents', dragging);
 
       // custom init function
-      $.isFunction(settings.onInit) && settings.onInit();
+      $.isFunction(settings.onInit) && settings.onInit($this, dragging);
     });
   }
 
