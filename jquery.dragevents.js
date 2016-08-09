@@ -67,7 +67,7 @@
         }
       });
       
-      $doc.bind('mousemove.dragevents', function (event) {
+      $doc.on('mousemove.dragevents', function (event) {
         if(dragging.status){
           dragging.dragEvent = event;
           $.isFunction(settings.onDrag) && settings.onDrag(dragging);
